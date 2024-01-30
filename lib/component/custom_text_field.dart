@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_calendar_scheduler/const/colors.dart';
 
 class CustomTextField extends StatelessWidget {
   final String label;
+  final bool isTime;
 
   const CustomTextField({
     required this.label,
+    required this.isTime,
     Key? key,
   }) : super(key: key);
 
@@ -21,16 +24,31 @@ class CustomTextField extends StatelessWidget {
             fontWeight: FontWeight.w600,
           ),
         ),
-        TextField(
-          cursorColor: Colors.grey,
-          keyboardType: TextInputType.number,
-          decoration: InputDecoration(
-            border: InputBorder.none,
-            filled: true,
-            fillColor: Colors.grey[300],
+        if (isTime) renderTextField(),
+        if (!isTime)
+          Expanded(
+            child: renderTextField(),
           ),
-        ),
       ],
+    );
+  }
+
+  Widget renderTextField() {
+    return TextField(
+      cursorColor: Colors.grey,
+      maxLines: isTime ? 1 : null,
+      expands: !isTime,
+      keyboardType: isTime ? TextInputType.number : TextInputType.multiline,
+      inputFormatters: isTime
+          ? [
+              FilteringTextInputFormatter.digitsOnly,
+            ]
+          : [],
+      decoration: InputDecoration(
+        border: InputBorder.none,
+        filled: true,
+        fillColor: Colors.grey[300],
+      ),
     );
   }
 }
