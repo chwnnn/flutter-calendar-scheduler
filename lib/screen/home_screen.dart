@@ -5,6 +5,7 @@ import 'package:flutter_calendar_scheduler/component/schedule_card.dart';
 import 'package:flutter_calendar_scheduler/component/today_banner.dart';
 import 'package:flutter_calendar_scheduler/const/colors.dart';
 import 'package:flutter_calendar_scheduler/database/drift_database.dart';
+import 'package:flutter_calendar_scheduler/model/schedule_with_color.dart';
 import 'package:get_it/get_it.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -37,7 +38,6 @@ class _HomeScreenState extends State<HomeScreen> {
             SizedBox(height: 8.0),
             TodayBanner(
               selectedDay: selectedDay,
-              scheduleCount: 3,
             ),
             SizedBox(height: 8.0),
             _ScheduleList(
@@ -89,34 +89,45 @@ class _ScheduleList extends StatelessWidget {
     return Expanded(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 8.0),
-        child: StreamBuilder<List<Schedule>>(
-          stream: GetIt.I<LocalDatabase>().watchSchedules(),
+        child: StreamBuilder<List<ScheduleWithColor>>(
+          stream: GetIt.I<LocalDatabase>().watchSchedules(selectedDate),
           builder: (context, snapshot) {
-            print('-------original data--------');
             print(snapshot.data);
-
-            List<Schedule> schedules = [];
-
-            if (snapshot.hasData) {
-              schedules = snapshot.data!
-                  .where((element) => element.date == selectedDate)
-                  .toList();
-
-              print('---------filtered data---------');
-              print(schedules);
+            if (!snapshot.hasData) {
+              return Center(child: CircularProgressIndicator());
+            }
+//060815-3012914
+            if (snapshot.hasData && snapshot.data!.isEmpty) {
+              return Center(
+                child: Text('스케쥴이 없습니다.'),
+              );
             }
 
             return ListView.separated(
-              itemCount: 5,
+              itemCount: snapshot.data!.length,
               separatorBuilder: (context, index) {
                 return SizedBox(height: 8.0);
               },
               itemBuilder: (context, index) {
-                return ScheduleCard(
-                  startTime: 8,
-                  endTime: 9,
-                  content: '프로그래밍 공부하기',
-                  color: Colors.red,
+                final scheduleWithColor = snapshot.data![index];
+
+                return Dismissible(
+                  key: ObjectKey(scheduleWithColor.schedule.id),
+                  direction: DismissDirection.endToStart,
+                  onDismissed: (DismissDirection direction){
+                    GetIt.I<LocalDatabase>().removeSchedule(scheduleWithColor.schedule.id);
+                  },
+                  child: ScheduleCard(
+                    startTime: scheduleWithColor.schedule.startTime,
+                    endTime: scheduleWithColor.schedule.endTime,
+                    content: scheduleWithColor.schedule.content,
+                    color: Color(
+                      int.parse(
+                        'FF${scheduleWithColor.categoryColor.hexCode}',
+                        radix: 16,
+                      ),
+                    ),
+                  ),
                 );
               },
             );
