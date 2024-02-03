@@ -92,7 +92,6 @@ class _ScheduleList extends StatelessWidget {
         child: StreamBuilder<List<ScheduleWithColor>>(
           stream: GetIt.I<LocalDatabase>().watchSchedules(selectedDate),
           builder: (context, snapshot) {
-            print(snapshot.data);
             if (!snapshot.hasData) {
               return Center(child: CircularProgressIndicator());
             }
@@ -117,14 +116,28 @@ class _ScheduleList extends StatelessWidget {
                   onDismissed: (DismissDirection direction){
                     GetIt.I<LocalDatabase>().removeSchedule(scheduleWithColor.schedule.id);
                   },
-                  child: ScheduleCard(
-                    startTime: scheduleWithColor.schedule.startTime,
-                    endTime: scheduleWithColor.schedule.endTime,
-                    content: scheduleWithColor.schedule.content,
-                    color: Color(
-                      int.parse(
-                        'FF${scheduleWithColor.categoryColor.hexCode}',
-                        radix: 16,
+                  child: GestureDetector(
+                    onTap: (){
+                      showModalBottomSheet(
+                        context: context,
+                        isScrollControlled: true,
+                        builder: (_) {
+                          return ScheduleBottomSheet(
+                            selectedDate: selectedDate,
+                            scheduleId: scheduleWithColor.schedule.id,
+                          );
+                        },
+                      );
+                    },
+                    child: ScheduleCard(
+                      startTime: scheduleWithColor.schedule.startTime,
+                      endTime: scheduleWithColor.schedule.endTime,
+                      content: scheduleWithColor.schedule.content,
+                      color: Color(
+                        int.parse(
+                          'FF${scheduleWithColor.categoryColor.hexCode}',
+                          radix: 16,
+                        ),
                       ),
                     ),
                   ),
